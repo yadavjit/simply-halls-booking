@@ -57,6 +57,7 @@
 import { connectDB } from "@/lib/db";
 import Hall from "@/lib/models/Hall";
 import { notFound } from "next/navigation";
+import Link from "next/link";
 
 export default async function HallDetailsPage({
     params,
@@ -92,6 +93,16 @@ export default async function HallDetailsPage({
             <p className="font-semibold">
                 £{hall.pricePerHour}/hour
             </p>
+
+            {/* <button className="mt-6 bg-black text-white px-6 py-3 rounded">
+                Book Now
+            </button> */}
+            <Link
+                href={`/halls/${hall._id}/book`}
+                className="mt-6 inline-block bg-black text-white px-6 py-3 rounded"
+            >
+                Book Now
+            </Link>
 
         </div>
     );
