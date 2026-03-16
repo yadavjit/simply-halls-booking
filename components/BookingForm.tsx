@@ -4,76 +4,113 @@ import { useState, useMemo } from "react";
 
 export default function BookingForm({ hall }: any) {
 
-  const [date, setDate] = useState("");
-  const [selectedSlot, setSelectedSlot] = useState("");
+    const [date, setDate] = useState("");
+    const [selectedSlot, setSelectedSlot] = useState("");
 
-  const slots = [
-    "09:00",
-    "10:00",
-    "11:00",
-    "12:00",
-    "13:00",
-    "14:00",
-    "15:00",
-  ];
+    const slots = [
+        "09:00",
+        "10:00",
+        "11:00",
+        "12:00",
+        "13:00",
+        "14:00",
+        "15:00",
+    ];
 
-  const price = useMemo(() => {
-    if (!selectedSlot) return 0;
-    return hall.pricePerHour;
-  }, [selectedSlot, hall.pricePerHour]);
+    const price = useMemo(() => {
+        if (!selectedSlot) return 0;
+        return hall.pricePerHour;
+    }, [selectedSlot, hall.pricePerHour]);
 
-  return (
 
-    <div className="mt-8">
+    const handleBooking = async () => {
 
-      <div className="mb-6">
+        if (!date || !selectedSlot) {
+            alert("Select date and slot");
+            return;
+        }
 
-        <label className="block mb-2">
-          Select Date
-        </label>
+        const res = await fetch("/api/bookings", {
 
-        <input
-          type="date"
-          className="border p-2"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-        />
+            method: "POST",
 
-      </div>
+            headers: {
+                "Content-Type": "application/json",
+            },
 
-      <div className="grid grid-cols-3 gap-3">
+            body: JSON.stringify({
+                hallId: hall._id,
+                date,
+                slot: selectedSlot,
+            }),
 
-        {slots.map((slot) => (
+        });
 
-          <button
-            key={slot}
-            onClick={() => setSelectedSlot(slot)}
-            className={`p-3 border rounded ${
-              selectedSlot === slot
-                ? "bg-black text-white"
-                : ""
-            }`}
-          >
-            {slot}
-          </button>
+        const data = await res.json();
 
-        ))}
+        if (data.success) {
+            alert("Booking confirmed!");
+        }
 
-      </div>
+    };
 
-      <div className="mt-6">
 
-        <p>
-          Selected Slot: {selectedSlot || "None"}
-        </p>
+    return (
 
-        <p className="font-semibold">
-          Price: £{price}
-        </p>
+        <div className="mt-8">
 
-      </div>
+            <div className="mb-6">
 
-    </div>
+                <label className="block mb-2">
+                    Select Date
+                </label>
 
-  );
+                <input
+                    type="date"
+                    className="border p-2"
+                    value={date}
+                    onChange={(e) => setDate(e.target.value)}
+                />
+
+            </div>
+
+            <div className="grid grid-cols-3 gap-3">
+
+                {slots.map((slot) => (
+
+                    <button
+                        key={slot}
+                        onClick={() => setSelectedSlot(slot)}
+                        className={`p-3 border rounded ${selectedSlot === slot
+                                ? "bg-black text-white"
+                                : ""
+                            }`}
+                    >
+                        {slot}
+                    </button>
+
+                ))}
+
+            </div>
+
+            <div className="mt-6">
+
+                <p>
+                    Selected Slot: {selectedSlot || "None"}
+                </p>
+
+                <p className="font-semibold">
+                    Price: £{price}
+                </p>
+
+            </div>
+            <button
+                onClick={handleBooking}
+                className="mt-6 bg-black text-white px-6 py-3 rounded"
+            >
+                Confirm Booking
+            </button>
+        </div>
+
+    );
 }
