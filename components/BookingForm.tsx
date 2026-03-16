@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 
 export default function BookingForm({ hall }: any) {
 
     const [date, setDate] = useState("");
     const [selectedSlot, setSelectedSlot] = useState("");
+    const [bookedSlots, setBookedSlots] = useState<string[]>([]);
 
     const slots = [
         "09:00",
@@ -21,6 +22,28 @@ export default function BookingForm({ hall }: any) {
         if (!selectedSlot) return 0;
         return hall.pricePerHour;
     }, [selectedSlot, hall.pricePerHour]);
+
+    useEffect(() => {
+
+        if (!date) return;
+
+        const fetchBookings = async () => {
+
+            const res = await fetch(
+                `/api/bookings?hallId=${hall._id}&date=${date}`
+            );
+
+            const data = await res.json();
+
+            const slots = data.bookings.map((b: any) => b.slot);
+
+            setBookedSlots(slots);
+
+        };
+
+        fetchBookings();
+
+    }, [date, hall._id]);
 
 
     const handleBooking = async () => {
@@ -78,16 +101,30 @@ export default function BookingForm({ hall }: any) {
 
                 {slots.map((slot) => (
 
+                    // <button
+                    //     key={slot}
+                    //     onClick={() => setSelectedSlot(slot)}
+                    //     className={`p-3 border rounded ${selectedSlot === slot
+                    //         ? "bg-black text-white"
+                    //         : ""
+                    //         }`}
+                    // >
+                    //     {slot}
+                    // </button>
+
                     <button
                         key={slot}
+                        disabled={bookedSlots.includes(slot)}
                         onClick={() => setSelectedSlot(slot)}
-                        className={`p-3 border rounded ${selectedSlot === slot
-                                ? "bg-black text-white"
-                                : ""
-                            }`}
-                    >
-                        {slot}
-                    </button>
+                        className={`p-3 border rounded
+    ${bookedSlots.includes(slot)
+                                ? "bg-gray-300 cursor-not-allowed"
+                                : selectedSlot === slot
+                                    ? "bg-black text-white"
+                                    : ""
+                            }
+  `}
+                    >{slot}</button>
 
                 ))}
 
