@@ -159,221 +159,282 @@ import { useState, useEffect, useMemo } from "react";
 
 export default function BookingForm({ hall }: any) {
 
-  const [date, setDate] = useState("");
-  const [startTime, setStartTime] = useState("");
-  const [endTime, setEndTime] = useState("");
+    const [date, setDate] = useState("");
+    const [startTime, setStartTime] = useState("");
+    const [endTime, setEndTime] = useState("");
 
-  const [bookedSlots, setBookedSlots] = useState<string[]>([]);
+    const [bookedSlots, setBookedSlots] = useState<string[]>([]);
 
-  const slots = [
-    "09:00",
-    "10:00",
-    "11:00",
-    "12:00",
-    "13:00",
-    "14:00",
-    "15:00",
-  ];
+    const slots = [
+        "09:00",
+        "10:00",
+        "11:00",
+        "12:00",
+        "13:00",
+        "14:00",
+        "15:00",
+    ];
 
-  // Fetch bookings when date changes
-  useEffect(() => {
+    // Fetch bookings when date changes
+    useEffect(() => {
 
-    if (!date) return;
+        if (!date) return;
 
-    const fetchBookings = async () => {
+        const fetchBookings = async () => {
 
-      const res = await fetch(
-        `/api/bookings?hallId=${hall._id}&date=${date}`
-      );
+            const res = await fetch(
+                `/api/bookings?hallId=${hall._id}&date=${date}`
+            );
 
-      const data = await res.json();
+            const data = await res.json();
 
-      const slots = data.bookings.map((b: any) => b.slot);
+            // const slots = data.bookings.map((b: any) => b.slot);
 
-      setBookedSlots(slots);
+            // setBookedSlots(slots);
+            setBookedSlots(data.bookings);
+        };
+
+        fetchBookings();
+
+    }, [date, hall._id]);
+
+    // Calculate duration
+    const duration = useMemo(() => {
+
+        if (!startTime || !endTime) return 0;
+
+        const start = parseInt(startTime.split(":")[0]);
+        const end = parseInt(endTime.split(":")[0]);
+
+        return end - start;
+
+    }, [startTime, endTime]);
+
+
+
+    // Calculate price
+    const totalPrice = useMemo(() => {
+
+        if (duration <= 0) return 0;
+
+        return duration * hall.pricePerHour;
+
+    }, [duration, hall.pricePerHour]);
+
+
+    // const blockedSlots = useMemo(() => {
+
+    //     const blocked: string[] = [];
+
+    //     bookedSlots.forEach((booking: any) => {
+
+    //         const start = parseInt(booking.startTime.split(":")[0]);
+    //         const end = parseInt(booking.endTime.split(":")[0]);
+
+    //         for (let i = start; i < end; i++) {
+
+    //             blocked.push(`${i.toString().padStart(2, "0")}:00`);
+
+    //         }
+
+    //     });
+
+    //     return blocked;
+
+    // }, [bookedSlots]);
+
+
+    // Handle slot click
+
+
+    const blockedSlots = useMemo(() => {
+
+        const blocked: string[] = [];
+
+        bookedSlots.forEach((booking: any) => {
+
+            // ✅ Skip invalid old data
+            if (!booking.startTime || !booking.endTime) return;
+
+            const start = parseInt(booking.startTime.split(":")[0]);
+            const end = parseInt(booking.endTime.split(":")[0]);
+
+            for (let i = start; i < end; i++) {
+
+                blocked.push(`${i.toString().padStart(2, "0")}:00`);
+
+            }
+
+        });
+
+        return blocked;
+
+    }, [bookedSlots]);
+
+    const handleSlotClick = (slot: string) => {
+
+        if (!startTime) {
+            setStartTime(slot);
+            return;
+        }
+
+        if (!endTime) {
+            setEndTime(slot);
+            return;
+        }
+
+        // Reset if both already selected
+        setStartTime(slot);
+        setEndTime("");
 
     };
 
-    fetchBookings();
-
-  }, [date, hall._id]);
 
 
+    // Save booking
+    const handleBooking = async () => {
 
-  // Calculate duration
-  const duration = useMemo(() => {
+        if (!date || !startTime || !endTime) {
+            alert("Select date, start time and end time");
+            return;
+        }
 
-    if (!startTime || !endTime) return 0;
+        const res = await fetch("/api/bookings", {
 
-    const start = parseInt(startTime.split(":")[0]);
-    const end = parseInt(endTime.split(":")[0]);
+            method: "POST",
 
-    return end - start;
+            headers: {
+                "Content-Type": "application/json",
+            },
 
-  }, [startTime, endTime]);
+            body: JSON.stringify({
+                hallId: hall._id,
+                date,
+                // slot: startTime
+                startTime,
+                endTime,
+            }),
 
+        });
 
+        const data = await res.json();
 
-  // Calculate price
-  const totalPrice = useMemo(() => {
+        if (data.success) {
+            alert("Booking confirmed!");
+        }
 
-    if (duration <= 0) return 0;
+    };
 
-    return duration * hall.pricePerHour;
+    return (
 
-  }, [duration, hall.pricePerHour]);
+        <div className="mt-8">
 
+            {/* Date Selection */}
 
+            <div className="mb-6">
 
-  // Handle slot click
-  const handleSlotClick = (slot: string) => {
+                <label className="block mb-2">
+                    Select Date
+                </label>
 
-    if (!startTime) {
-      setStartTime(slot);
-      return;
-    }
+                <input
+                    type="date"
+                    className="border p-2"
+                    value={date}
+                    onChange={(e) => setDate(e.target.value)}
+                />
 
-    if (!endTime) {
-      setEndTime(slot);
-      return;
-    }
-
-    // Reset if both already selected
-    setStartTime(slot);
-    setEndTime("");
-
-  };
-
-
-
-  // Save booking
-  const handleBooking = async () => {
-
-    if (!date || !startTime || !endTime) {
-      alert("Select date, start time and end time");
-      return;
-    }
-
-    const res = await fetch("/api/bookings", {
-
-      method: "POST",
-
-      headers: {
-        "Content-Type": "application/json",
-      },
-
-      body: JSON.stringify({
-        hallId: hall._id,
-        date,
-        slot: startTime
-      }),
-
-    });
-
-    const data = await res.json();
-
-    if (data.success) {
-      alert("Booking confirmed!");
-    }
-
-  };
+            </div>
 
 
 
-  return (
+            {/* Slot Selection */}
 
-    <div className="mt-8">
+            <div className="grid grid-cols-3 gap-3">
 
-      {/* Date Selection */}
+                {slots.map((slot) => {
 
-      <div className="mb-6">
+                    // const isBooked = bookedSlots.includes(slot);
 
-        <label className="block mb-2">
-          Select Date
-        </label>
-
-        <input
-          type="date"
-          className="border p-2"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-        />
-
-      </div>
+                    const isBlocked = blockedSlots.includes(slot);
 
 
+                    return (
 
-      {/* Slot Selection */}
+                        //             <button
+                        //                 key={slot}
+                        //                 disabled={isBooked}
+                        //                 onClick={() => handleSlotClick(slot)}
+                        //                 className={`p-3 border rounded
+                        //     ${isBooked
+                        //                         ? "bg-gray-300 cursor-not-allowed"
+                        //                         : startTime === slot || endTime === slot
+                        //                             ? "bg-black text-white"
+                        //                             : ""
+                        //                     }
+                        //   `}
+                        //             >
 
-      <div className="grid grid-cols-3 gap-3">
+                        //                 {slot}
 
-        {slots.map((slot) => {
+                        //             </button>
 
-          const isBooked = bookedSlots.includes(slot);
+                        <button
+                            key={slot}
+                            disabled={isBlocked}
+                            onClick={() => handleSlotClick(slot)}
+                            className={`p-3 border rounded
+    ${isBlocked
+                                    ? "bg-gray-300 cursor-not-allowed"
+                                    : startTime === slot || endTime === slot
+                                        ? "bg-black text-white"
+                                        : ""
+                                }
+  `}
+                        >{slot}</button>
 
-          return (
+                    );
+
+                })}
+
+            </div>
+
+
+
+            {/* Booking Summary */}
+
+            <div className="mt-6">
+
+                <p>
+                    Start Time: {startTime || "Not selected"}
+                </p>
+
+                <p>
+                    End Time: {endTime || "Not selected"}
+                </p>
+
+                <p>
+                    Duration: {duration} hours
+                </p>
+
+                <p className="font-semibold">
+                    Total Price: £{totalPrice}
+                </p>
+
+            </div>
+
+
+
+            {/* Confirm Button */}
 
             <button
-              key={slot}
-              disabled={isBooked}
-              onClick={() => handleSlotClick(slot)}
-              className={`p-3 border rounded
-                ${
-                  isBooked
-                    ? "bg-gray-300 cursor-not-allowed"
-                    : startTime === slot || endTime === slot
-                    ? "bg-black text-white"
-                    : ""
-                }
-              `}
+                onClick={handleBooking}
+                className="mt-6 bg-black text-white px-6 py-3 rounded"
             >
-
-              {slot}
-
+                Confirm Booking
             </button>
 
-          );
+        </div>
 
-        })}
-
-      </div>
-
-
-
-      {/* Booking Summary */}
-
-      <div className="mt-6">
-
-        <p>
-          Start Time: {startTime || "Not selected"}
-        </p>
-
-        <p>
-          End Time: {endTime || "Not selected"}
-        </p>
-
-        <p>
-          Duration: {duration} hours
-        </p>
-
-        <p className="font-semibold">
-          Total Price: £{totalPrice}
-        </p>
-
-      </div>
-
-
-
-      {/* Confirm Button */}
-
-      <button
-        onClick={handleBooking}
-        className="mt-6 bg-black text-white px-6 py-3 rounded"
-      >
-        Confirm Booking
-      </button>
-
-    </div>
-
-  );
+    );
 }

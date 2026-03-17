@@ -39,24 +39,29 @@
 // export default mongoose.models.Booking ||
 //   mongoose.model("Booking", bookingSchema);
 
+// --------------------------------------------------------------------------------------------------------------
 
 import mongoose from "mongoose";
 
 const bookingSchema = new mongoose.Schema({
-  hallId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Hall",
-  },
+    hallId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Hall",
+    },
 
-  date: String,
+    date: String,
 
-  slot: String,
+    //   slot: String,
 
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
+    startTime: String,
+
+    endTime: String,
+
+    createdAt: {
+        type: Date,
+        default: Date.now,
+    },
 });
 
 export default mongoose.models.Booking ||
-mongoose.model("Booking", bookingSchema);
+    mongoose.model("Booking", bookingSchema);

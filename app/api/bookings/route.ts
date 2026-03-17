@@ -39,3 +39,23 @@ export async function GET(req: Request) {
   });
 
 }
+
+export async function POST(req: Request) {
+
+  const body = await req.json();
+
+  await connectDB();
+
+  const booking = await Booking.create({
+    hallId: body.hallId,
+    date: body.date,
+    startTime: body.startTime,
+    endTime: body.endTime,
+  });
+
+  return Response.json({
+    success: true,
+    booking,
+  });
+
+}
